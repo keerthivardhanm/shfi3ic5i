@@ -6,6 +6,7 @@ import {
   AlertTriangle,
   BarChart3,
   Bell,
+  Calendar,
   LayoutDashboard,
   Map,
   MoreHorizontal,
@@ -15,10 +16,9 @@ import {
   TrendingDown,
   TrendingUp,
   Users,
-  Calendar,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 import type { Kpi, Prediction } from '@/lib/types';
@@ -26,7 +26,7 @@ import { densityChartData, sosChartData, aiPredictionsData } from '@/lib/data';
 import { cn } from '@/lib/utils';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   ChartContainer,
   ChartTooltip,
@@ -97,7 +97,7 @@ export function AppSidebar() {
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
               <Link href={item.href} passHref>
-                <SidebarMenuButton isActive={pathname === item.href}>
+                <SidebarMenuButton isActive={pathname.startsWith(item.href)}>
                   <item.icon />
                   {item.label}
                 </SidebarMenuButton>
@@ -136,9 +136,14 @@ export function AppSidebar() {
 }
 
 export function AppHeader() {
+  const router = useRouter();
+  const pathname = usePathname();
+  // A simple way to get a title from the path
+  const title = pathname.split('/').pop()?.replace(/-/g, ' ') || 'Dashboard';
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
-      <h1 className="hidden text-lg font-semibold md:block">Dashboard</h1>
+      <h1 className="hidden text-lg font-semibold capitalize md:block">{title === 'admin' ? 'Dashboard' : title}</h1>
       <div className="ml-auto flex items-center gap-4">
         <div className="relative hidden w-64 md:block">
           <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />

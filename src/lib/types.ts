@@ -31,11 +31,33 @@ export type User = {
   email: string;
   role: 'admin' | 'organizer' | 'volunteer' | 'audience';
   assignedZones: string[];
-  eventId: string;
-  location: {
+  avatar: string;
+  // location and status are optional as they might not apply to all roles or be available at all times
+  location?: { 
     lat: number;
     lng: number;
   };
-  avatar: string;
-  status: string;
+  status?: string;
+};
+
+export type SubZone = {
+  id: string;
+  parentId: string;
+  name: string;
+  polygon: { lat: number; lng: number }[];
+  area: number;
+  capacity: number;
+  overlay: google.maps.Polygon;
+};
+
+export type Zone = {
+  id: string;
+  name: string;
+  polygon: { lat: number; lng: number }[];
+  area: number;
+  capacity: number;
+  color: string;
+  organizers: string[];
+  overlay: google.maps.Polygon;
+  subZones: Record<string, SubZone>;
 };
