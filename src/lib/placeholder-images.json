@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "map-background",
+      "description": "Overhead aerial view of a large outdoor event space or festival ground, suitable for plotting zones.",
+      "imageUrl": "https://images.unsplash.com/photo-1710766329848-2122e3b07ce4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwzfHxldmVudCUyMG1hcHxlbnwwfHx8fDE3NjE0MjA4NzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "event map"
+    }
+  ]
 }
