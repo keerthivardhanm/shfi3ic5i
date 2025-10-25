@@ -1,9 +1,24 @@
+'use client';
+
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Siren, QrCode, User, Bell } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useAuthGuard } from "@/hooks/use-auth-guard";
+import { Logo } from "@/components/icons";
 
 export default function AudienceDashboard() {
+    const { loading } = useAuthGuard('audience');
+
+    if (loading) {
+      return (
+        <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
+          <Logo className="size-12 animate-pulse text-primary" />
+          <p className="mt-4 text-lg text-muted-foreground">Loading Your Dashboard...</p>
+        </div>
+      );
+    }
+
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
        <Card className="w-full max-w-md shadow-2xl">

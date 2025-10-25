@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Logo } from '@/components/icons';
 import { useRouter } from 'next/navigation';
 import { useUser } from '@/firebase/auth/use-user';
-import { Separator } from '@/components/ui/separator';
 
 const testAccounts = [
   { email: 'admin1@gmail.com', role: 'Admin' },
@@ -39,7 +38,7 @@ export default function LoginPage() {
     try {
       await signInWithEmailAndPassword(auth, loginEmail, loginPassword);
       toast({ title: 'Login Successful' });
-      // The useEffect will handle the redirection
+      // The useEffect hook will handle redirection.
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Login Failed', description: error.message });
     } finally {
@@ -56,7 +55,7 @@ export default function LoginPage() {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center bg-background">
         <div className="flex items-center gap-4">
-          <Logo className="size-12 text-primary" />
+          <Logo className="size-12 text-primary animate-pulse" />
           <h1 className="text-4xl font-bold">CrowdSafe 360°</h1>
         </div>
         <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
@@ -75,7 +74,7 @@ export default function LoginPage() {
           <form onSubmit={handleLogin}>
             <CardHeader className="text-center">
               <CardTitle className="text-2xl">Agent Login</CardTitle>
-              <CardDescription>Hey, enter your details to get sign in to your account</CardDescription>
+              <CardDescription>Enter your details to sign in to your account</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
