@@ -90,7 +90,7 @@ export function AppSidebar() {
       <SidebarHeader>
         <div className="flex items-center gap-2">
           <Logo className="size-8 text-primary" />
-          <span className="text-lg font-semibold">CrowdSafe 360°</span>
+          <span className="text-lg font-semibold">Flow-Track</span>
         </div>
       </SidebarHeader>
       <SidebarContent>
@@ -269,7 +269,7 @@ export function SosChart() {
             <CardContent>
                 <ChartContainer config={sosChartConfig} className="h-64 w-full">
                     <BarChart data={sosChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
-                        <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                        <CartesianGrid vertical={false} strokeDasharray="3-3" />
                         <XAxis dataKey="zone" tickLine={false} axisLine={false} tickMargin={8} />
                         <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />

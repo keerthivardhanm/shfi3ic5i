@@ -13,7 +13,7 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'CrowdSafe 360°',
+  title: 'Flow-Track',
   description: 'An AI-powered, real-time, geolocation-based event safety and crowd management platform for large-scale gatherings.',
 };
 
@@ -38,7 +38,7 @@ export default function RootLayout({
         </FirebaseClientProvider>
         <Toaster />
         <Script
-          src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFIFw8X7OTSOJ5lh-Z-HUxzNzbD2TYl-w&libraries=drawing,geometry,visualization&callback=Function.prototype"
+          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,visualization&callback=Function.prototype`}
           strategy="afterInteractive"
         />
       </body>

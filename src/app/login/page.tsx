@@ -12,7 +12,7 @@ export default function LoginPage() {
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="absolute top-8 left-8 flex items-center gap-2">
         <Logo className="size-8 text-foreground" />
-        <h1 className="text-xl font-semibold">CrowdSafe 360°</h1>
+        <h1 className="text-xl font-semibold">Flow-Track</h1>
       </div>
       <Card className="w-full max-w-md shadow-2xl">
         <CardHeader className="text-center">
@@ -32,7 +32,7 @@ export default function LoginPage() {
         </CardContent>
       </Card>
       <p className="absolute bottom-4 text-xs text-muted-foreground">
-        Copyright © CrowdSafe 360° 2024 | Privacy Policy
+        Copyright © Flow-Track 2024 | Privacy Policy
       </p>
     </div>
   );
