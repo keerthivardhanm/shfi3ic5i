@@ -2,20 +2,8 @@
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { BarChart, Bell, MessageSquare, QrCode, ShieldCheck, Users } from "lucide-react";
-import { useAuthGuard } from "@/hooks/use-auth-guard";
-import { Logo } from "@/components/icons";
 
 export default function OrganizerDashboard() {
-    const { loading } = useAuthGuard('organizer');
-
-    if (loading) {
-      return (
-        <div className="flex h-screen w-full flex-col items-center justify-center bg-background">
-          <Logo className="size-12 animate-pulse text-primary" />
-          <p className="mt-4 text-lg text-muted-foreground">Loading Your Dashboard...</p>
-        </div>
-      );
-    }
   return (
     <div className="flex min-h-screen w-full flex-col bg-muted/40">
       <div className="flex flex-col sm:gap-4 sm:py-4">
@@ -120,7 +108,7 @@ export default function OrganizerDashboard() {
                      <div className="flex items-start gap-3">
                         <div className="mt-1 h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse"></div>
                         <div className="flex-1">
-                            <p className="font-medium">Overcrowding Alert</p>
+                            <p className="font-medium">Overcrowding Alert</p>p>
                             <p className="text-sm text-muted-foreground">Zone A-2 has exceeded capacity. <span className="font-medium">8m ago</span></p>
                         </div>
                     </div>
