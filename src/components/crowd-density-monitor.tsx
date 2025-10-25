@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from './ui/card';
+import { useFirestore } from '@/firebase';
+import { doc, setDoc } from 'firebase/firestore';
 
 // CONFIG
 const TOTAL_AUDIENCE = 25000;
@@ -80,6 +82,7 @@ function intensityToColor(it: number): string {
 
 // --- React Component ---
 export function CrowdDensityMonitor({ onDataUpdate }: CrowdDensityMonitorProps) {
+    const firestore = useFirestore();
     const [zoneStates, setZoneStates] = useState<Record<string, ZoneDensityData>>(() => {
         const initial: Record<string, ZoneDensityData> = {};
         zoneKeys.forEach(k => {
@@ -212,6 +215,18 @@ export function CrowdDensityMonitor({ onDataUpdate }: CrowdDensityMonitorProps) 
                     textColor: luminanceFromHex(bgColor) > 0.55 ? '#111' : '#fff'
                 };
 
+                if (firestore) {
+                    const zoneDocRef = doc(firestore, 'zones', k);
+                    const firestoreData = {
+                        name: zoneData.name,
+                        area: zoneData.area,
+                        currentCount: p,
+                        density: d,
+                        intensity: it,
+                    };
+                    setDoc(zoneDocRef, firestoreData, { merge: true });
+                }
+
                 prevPeopleRef.current[k] = p;
             });
 
@@ -226,7 +241,7 @@ export function CrowdDensityMonitor({ onDataUpdate }: CrowdDensityMonitorProps) 
         
         const intervalId = setInterval(tick, TICK_MS);
         return () => clearInterval(intervalId);
-    }, [onDataUpdate]);
+    }, [onDataUpdate, firestore]);
 
     return (
         <Card>
