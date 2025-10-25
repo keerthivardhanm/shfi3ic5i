@@ -1,0 +1,287 @@
+{
+  "entities": {
+    "user": {
+      "title": "User",
+      "description": "Represents a user in the system.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string",
+          "format": "email"
+        },
+        "role": {
+          "type": "string",
+          "enum": ["admin", "organizer", "volunteer", "audience"]
+        },
+        "assignedZones": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number"
+            },
+            "lng": {
+              "type": "number"
+            }
+          }
+        },
+        "avatar": {
+          "type": "string",
+          "format": "uri"
+        },
+        "status": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "email", "role"]
+    },
+    "event": {
+      "title": "Event",
+      "description": "Represents an event.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "startAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "endAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "zoneRefs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "status": {
+          "type": "string"
+        },
+        "createdBy": {
+          "type": "string"
+        }
+      },
+      "required": ["name", "startAt", "endAt"]
+    },
+    "zone": {
+      "title": "Zone",
+      "description": "Represents a geographical zone within an event.",
+      "type": "object",
+      "properties": {
+        "eventId": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "polygonGeoJSON": {
+          "type": "string"
+        },
+        "capacity": {
+          "type": "number"
+        },
+        "currentCount": {
+          "type": "number"
+        },
+        "colorCode": {
+          "type": "string"
+        },
+        "volunteers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "organizers": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": ["eventId", "name", "capacity"]
+    },
+    "alert": {
+      "title": "Alert",
+      "description": "Represents a safety alert.",
+      "type": "object",
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["manual", "auto", "sos"]
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "message": {
+          "type": "string"
+        },
+        "priority": {
+          "type": "string",
+          "enum": ["High", "Medium", "Low"]
+        },
+        "senderId": {
+          "type": "string"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["resolved", "pending"]
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["type", "eventId", "priority", "status", "timestamp"]
+    },
+    "attendance": {
+      "title": "Attendance",
+      "description": "Logs user check-in and check-out.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "checkInTime": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checkOutTime": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "eventId", "checkInTime"]
+    },
+    "message": {
+      "title": "Message",
+      "description": "Represents a chat message.",
+      "type": "object",
+      "properties": {
+        "zoneId": {
+          "type": "string"
+        },
+        "senderId": {
+          "type": "string"
+        },
+        "receiverIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "text": {
+          "type": "string"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "read": {
+          "type": "boolean"
+        }
+      },
+      "required": ["senderId", "text", "timestamp"]
+    },
+    "sosReport": {
+      "title": "SOS Report",
+      "description": "Represents an SOS report from an audience member.",
+      "type": "object",
+      "properties": {
+        "userId": {
+          "type": "string"
+        },
+        "zoneId": {
+          "type": "string"
+        },
+        "eventId": {
+          "type": "string"
+        },
+        "type": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "location": {
+          "type": "object",
+          "properties": {
+            "lat": {
+              "type": "number"
+            },
+            "lng": {
+              "type": "number"
+            }
+          }
+        },
+        "resolved": {
+          "type": "boolean"
+        },
+        "timestamp": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": ["userId", "eventId", "type", "location", "timestamp"]
+    }
+  },
+  "auth": {
+    "providers": ["email_password"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/user" },
+      "description": "User profiles"
+    },
+    "/events/{eventId}": {
+      "schema": { "$ref": "#/entities/event" },
+      "description": "Event details"
+    },
+    "/zones/{zoneId}": {
+      "schema": { "$ref": "#/entities/zone" },
+      "description": "Event zones"
+    },
+    "/alerts/{alertId}": {
+      "schema": { "$ref": "#/entities/alert" },
+      "description": "System and user alerts"
+    },
+    "/attendance/{logId}": {
+      "schema": { "$ref": "#/entities/attendance" },
+      "description": "Attendance logs"
+    },
+    "/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/message" },
+      "description": "Chat messages"
+    },
+    "/sosReports/{sosId}": {
+      "schema": { "$ref": "#/entities/sosReport" },
+      "description": "SOS reports"
+    }
+  }
+}

@@ -24,3 +24,18 @@ export type Prediction = {
     time: string;
     zone: string;
 }
+
+export type User = {
+  uid: string;
+  name: string;
+  email: string;
+  role: 'admin' | 'organizer' | 'volunteer' | 'audience';
+  assignedZones: string[];
+  eventId: string;
+  location: {
+    lat: number;
+    lng: number;
+  };
+  avatar: string;
+  status: string;
+};

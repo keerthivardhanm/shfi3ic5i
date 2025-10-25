@@ -4,6 +4,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { cn } from '@/lib/utils';
 import Script from 'next/script';
+import { FirebaseClientProvider } from '@/firebase/client-provider';
 
 const inter = Inter({
   subsets: ['latin'],
@@ -13,7 +14,7 @@ const inter = Inter({
 
 export const metadata: Metadata = {
   title: 'CrowdSafe 360°',
-  description: 'Real-time crowd management and safety platform',
+  description: 'An AI-powered, real-time, geolocation-based event safety and crowd management platform for large-scale gatherings.',
 };
 
 export default function RootLayout({
@@ -32,7 +33,9 @@ export default function RootLayout({
         />
       </head>
       <body className={cn('min-h-screen bg-background font-body antialiased', inter.variable)}>
-        {children}
+        <FirebaseClientProvider>
+            {children}
+        </FirebaseClientProvider>
         <Toaster />
         <Script
           src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCFIFw8X7OTSOJ5lh-Z-HUxzNzbD2TYl-w&libraries=drawing,geometry,visualization&callback=Function.prototype"

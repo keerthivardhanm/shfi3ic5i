@@ -1,0 +1,58 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+
+    function isRole(role) {
+      return isSignedIn() && getUserRole() == role;
+    }
+    
+    match /users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isRole('admin') || request.auth.uid == userId;
+    }
+
+    match /events/{eventId} {
+      allow read: if isSignedIn();
+      allow write: if isRole('admin');
+    }
+
+    match /zones/{zoneId} {
+      allow read: if isSignedIn();
+      allow write: if isRole('admin') || isRole('organizer');
+    }
+
+    match /alerts/{alertId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn();
+      allow update: if isRole('admin') || isRole('organizer');
+      allow delete: if isRole('admin');
+    }
+    
+    match /attendance/{logId} {
+        allow read: if isRole('admin') || isRole('organizer');
+        allow create: if isRole('admin') || isRole('organizer');
+        allow write: if isRole('admin');
+    }
+    
+    match /messages/{messageId} {
+        allow read, write: if isSignedIn();
+    }
+    
+    match /sosReports/{sosId} {
+        allow read: if isRole('admin') || isRole('organizer');
+        allow create: if isRole('audience');
+        allow update: if isRole('admin') || isRole('organizer');
+    }
+
+  }
+}
