@@ -1,6 +1,3 @@
-'use client';
-import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
-
 export default function AdminLayout({
   children,
 }: {
@@ -8,10 +5,8 @@ export default function AdminLayout({
 }) {
 
   return (
-    <SidebarProvider>
-      <SidebarInset>
-        {children}
-      </SidebarInset>
-    </SidebarProvider>
+    <>
+      {children}
+    </>
   );
 }

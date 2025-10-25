@@ -41,16 +41,6 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarTrigger,
-} from '@/components/ui/sidebar';
 import { Textarea } from '@/components/ui/textarea';
 import { Logo } from '@/components/icons';
 import { useToast } from '@/hooks/use-toast';
@@ -71,10 +61,10 @@ const sosChartConfig = {
   },
 } satisfies ChartConfig
 
-export function AppSidebar() {
+export function AppHeader() {
+  const { user } = useUser();
   const router = useRouter();
   const { toast } = useToast();
-  const { user } = useUser();
 
   const handleLogout = async () => {
     try {
@@ -87,49 +77,22 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar>
-      <SidebarHeader>
-        <div className="flex items-center gap-2">
+    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
+       <div className="flex items-center gap-2">
           <Logo className="size-8 text-primary" />
           <span className="text-lg font-semibold">CrowdSafe 360°</span>
         </div>
-      </SidebarHeader>
-      <SidebarContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="/admin" isActive>
-              <LayoutDashboard />
-              Dashboard
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="#">
-              <Map />
-              Zones
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="#">
-              <BarChart3 />
-              Reports
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="#">
-              <Users />
-              Team
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton href="#">
-              <Settings />
-              Settings
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
-      </SidebarContent>
-      <SidebarFooter>
-        <DropdownMenu>
+      <h1 className="hidden text-lg font-semibold md:block">Admin Dashboard</h1>
+      <div className="ml-auto flex items-center gap-4">
+        <div className="relative hidden w-64 md:block">
+          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
+          <Input placeholder="Search zones, events..." className="pl-8" />
+        </div>
+        <Button variant="ghost" size="icon" className="rounded-full">
+          <Bell className="size-5" />
+          <span className="sr-only">Toggle notifications</span>
+        </Button>
+         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="ghost" className="w-full justify-start gap-2 px-2">
               <Avatar className="size-8">
@@ -143,7 +106,7 @@ export function AppSidebar() {
               <MoreHorizontal className="ml-auto" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="w-56" side="top">
+          <DropdownMenuContent className="w-56" side="bottom" align='end'>
             <DropdownMenuLabel>My Account</DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem>Profile</DropdownMenuItem>
@@ -152,25 +115,6 @@ export function AppSidebar() {
             <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
-      </SidebarFooter>
-    </Sidebar>
-  )
-}
-
-export function AppHeader() {
-  return (
-    <header className="flex h-14 items-center gap-4 border-b bg-card px-4 md:px-6">
-      <SidebarTrigger className="md:hidden" />
-      <h1 className="hidden text-lg font-semibold md:block">Admin Dashboard</h1>
-      <div className="ml-auto flex items-center gap-4">
-        <div className="relative hidden w-64 md:block">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" />
-          <Input placeholder="Search zones, events..." className="pl-8" />
-        </div>
-        <Button variant="ghost" size="icon" className="rounded-full">
-          <Bell className="size-5" />
-          <span className="sr-only">Toggle notifications</span>
-        </Button>
       </div>
     </header>
   )
