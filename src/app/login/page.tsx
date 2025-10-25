@@ -11,7 +11,7 @@ import { useToast } from '@/hooks/use-toast';
 import { signInWithEmail, signUpWithEmail } from '@/firebase/auth';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 
-type Role = 'admin' | 'organizer' | 'volunteer' | 'audience';
+type Role = 'admin' | 'organizer' | 'audience';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -93,12 +93,6 @@ export default function LoginPage() {
                         <RadioGroupItem value="organizer" id="organizer" className="peer sr-only" />
                         <Label htmlFor="organizer" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
                             Organizer
-                        </Label>
-                    </div>
-                     <div>
-                        <RadioGroupItem value="volunteer" id="volunteer" className="peer sr-only" />
-                        <Label htmlFor="volunteer" className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
-                            Volunteer
                         </Label>
                     </div>
                      <div>
