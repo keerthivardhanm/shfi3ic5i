@@ -4,7 +4,6 @@ import type { NextRequest } from 'next/server';
 const protectedRoutes = {
   admin: '/admin',
   organizer: '/organizer',
-  volunteer: '/volunteer',
   audience: '/audience',
 };
 
@@ -26,5 +25,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/admin/:path*', '/organizer/:path*', '/volunteer/:path*', '/audience/:path*'],
+  matcher: ['/admin/:path*', '/organizer/:path*', '/audience/:path*'],
 };

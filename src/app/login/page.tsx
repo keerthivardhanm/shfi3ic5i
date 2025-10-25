@@ -29,9 +29,6 @@ export default function LoginPage() {
           <Button onClick={() => router.push('/audience')} variant="outline" size="lg">
             Go to Audience Dashboard
           </Button>
-           <Button onClick={() => router.push('/volunteer')} variant="ghost" size="lg">
-            Go to Volunteer Dashboard
-          </Button>
         </CardContent>
       </Card>
       <p className="absolute bottom-4 text-xs text-muted-foreground">
