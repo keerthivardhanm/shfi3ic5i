@@ -6,7 +6,7 @@ import { kpiData } from '@/lib/data';
 
 export default function AdminDashboard() {
   return (
-    <div className="flex h-screen flex-col">
+    <div className="flex h-screen flex-row bg-muted/40">
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
