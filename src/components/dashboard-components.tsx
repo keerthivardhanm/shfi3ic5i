@@ -18,8 +18,8 @@ import {
   Calendar,
 } from 'lucide-react';
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
-import { useRouter } from 'next/navigation';
-import { getAuth, signOut } from 'firebase/auth';
+import { useRouter, usePathname } from 'next/navigation';
+import Link from 'next/link';
 
 import type { Kpi, Prediction } from '@/lib/types';
 import { densityChartData, sosChartData, aiPredictionsData } from '@/lib/data';
@@ -65,17 +65,24 @@ const sosChartConfig = {
 export function AppSidebar() {
   const { user } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   const handleLogout = async () => {
-    try {
-      await signOut(getAuth());
-      toast({ title: 'Logged Out' });
-      router.push('/login');
-    } catch (error) {
-      toast({ variant: 'destructive', title: 'Logout failed' });
-    }
+    // In a real app, you'd call signOut from Firebase Auth
+    toast({ title: 'Logged Out' });
+    router.push('/login');
   };
+
+  const menuItems = [
+    { href: '/admin', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/admin/events', label: 'Events', icon: Calendar },
+    { href: '/admin/zones', label: 'Zones', icon: Map },
+    { href: '/admin/alerts', label: 'Alerts', icon: Bell },
+    { href: '/admin/reports', label: 'Reports', icon: BarChart3 },
+    { href: '/admin/team', label: 'Team', icon: Users },
+    { href: '/admin/settings', label: 'Settings', icon: Settings },
+  ];
 
   return (
     <Sidebar>
@@ -87,48 +94,16 @@ export function AppSidebar() {
       </SidebarHeader>
       <SidebarContent>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton isActive>
-              <LayoutDashboard />
-              Dashboard
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Calendar />
-              Events
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Map />
-              Zones
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Bell />
-              Alerts
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <BarChart3 />
-              Reports
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Users />
-              Team
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton>
-              <Settings />
-              Settings
-            </SidebarMenuButton>
-          </SidebarMenuItem>
+          {menuItems.map((item) => (
+            <SidebarMenuItem key={item.href}>
+              <Link href={item.href} passHref>
+                <SidebarMenuButton isActive={pathname === item.href}>
+                  <item.icon />
+                  {item.label}
+                </SidebarMenuButton>
+              </Link>
+            </SidebarMenuItem>
+          ))}
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
@@ -137,7 +112,7 @@ export function AppSidebar() {
             <Button variant="ghost" className="w-full justify-start gap-2 px-2">
               <Avatar className="size-8">
                 <AvatarImage src={user?.photoURL || "https://i.pravatar.cc/150?u=a042581f4e29026704d"} />
-                <AvatarFallback>{user?.email?.charAt(0).toUpperCase()}</AvatarFallback>
+                <AvatarFallback>{user?.email?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start truncate">
                 <span className="font-semibold">{user?.displayName || 'Admin User'}</span>

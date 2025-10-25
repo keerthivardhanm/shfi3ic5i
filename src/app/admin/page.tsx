@@ -1,7 +1,8 @@
 'use client';
 
-import { MapView } from '@/components/map-view';
-import { KpiCard, DensityChart, SosChart, AiPredictions, AiSummaryGenerator, AppHeader, AppSidebar } from '@/components/dashboard-components';
+import { AppHeader, AppSidebar } from '@/components/dashboard-components';
+import { KpiCard, DensityChart, SosChart, AiPredictions, AiSummaryGenerator } from '@/components/dashboard-components';
+import { ReadOnlyMap } from '@/components/read-only-map';
 import { kpiData } from '@/lib/data';
 
 export default function AdminDashboard() {
@@ -19,7 +20,7 @@ export default function AdminDashboard() {
 
           <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-3">
-              <MapView />
+              <ReadOnlyMap />
             </div>
           </div>
 
