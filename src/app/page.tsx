@@ -12,6 +12,9 @@ export default function HomePage() {
   useEffect(() => {
     if (!loading) {
       if (user) {
+        // If claims are still loading, don't redirect yet
+        if (!customClaims && loading) return;
+
         switch (customClaims?.role) {
           case 'admin':
             router.push('/admin');
@@ -26,8 +29,11 @@ export default function HomePage() {
             router.push('/audience');
             break;
           default:
-            // If role is not set, redirect to login, they might need to logout and log back in
-             router.push('/login');
+            // If role is not set, but user is authenticated, they might need to logout and log back in for claims to update
+            // Or wait for claims. For now, we can redirect to login as a safe fallback.
+            if (customClaims !== undefined) { // customClaims is null when loading, undefined when not present
+                 router.push('/login');
+            }
             break;
         }
       } else {
@@ -42,7 +48,7 @@ export default function HomePage() {
         <Logo className="size-12 text-primary" />
         <h1 className="text-4xl font-bold">CrowdSafe 360°</h1>
       </div>
-      <p className="mt-4 text-lg text-muted-foreground">Loading...</p>
+      <p className="mt-4 text-lg text-muted-foreground">Routing to your dashboard...</p>
     </div>
   );
 }

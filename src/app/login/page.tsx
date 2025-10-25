@@ -24,7 +24,7 @@ export default function LoginPage() {
   const { user, loading: userLoading } = useUser();
 
   useEffect(() => {
-    if (user && !userLoading) {
+    if (!userLoading && user) {
       router.push('/');
     }
   }, [user, userLoading, router]);
