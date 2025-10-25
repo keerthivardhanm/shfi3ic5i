@@ -95,38 +95,32 @@ export function AppSidebar() {
         </div>
       </SidebarHeader>
       <SidebarContent>
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Dashboard" isActive>
-              <LayoutDashboard />
-              Dashboard
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Zones">
-              <Map />
-              Zones
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Reports">
-              <BarChart3 />
-              Reports
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Team">
-              <Users />
-              Team
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <SidebarMenuButton tooltip="Settings">
-              <Settings />
-              Settings
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+        <div className="p-4 text-sm">
+          <h2 className="font-bold text-lg mb-2">👑 1️⃣ ADMIN — The Command Hub</h2>
+          <div className="space-y-4">
+            <div>
+              <h3 className="font-semibold">Responsibilities:</h3>
+              <ul className="list-disc pl-5 mt-1 space-y-1 text-xs text-muted-foreground">
+                <li>Full access to events, zones, AI predictions, and system health.</li>
+                <li>Create, edit, and manage zones.</li>
+                <li>Broadcast alerts and monitor real-time crowd density.</li>
+              </ul>
+            </div>
+            <div>
+              <h3 className="font-semibold">Key Features:</h3>
+              <ul className="list-disc pl-5 mt-1 space-y-1 text-xs text-muted-foreground">
+                <li>Interactive Zone Mapping: Draw/edit/delete polygons on Google Maps/Mapbox.</li>
+                <li>Density Visualization: Heatmaps (Safe 🟢, Warning 🟠, Critical 🔴) updated every 2s.</li>
+                <li>AI Insights: Predictive congestion alerts via AI engine.</li>
+                <li>User Management: Only admins can add organizers/audience roles.</li>
+                <li>Alerts & Communication: Manual & AI-triggered alerts, FCM integration.</li>
+                <li>Attendance & Reports: QR/barcode check-ins, real-time analytics, downloadable reports.</li>
+                <li>Event Management: Multi-event support, historical data access.</li>
+                <li>Location-Based Safety: Live tracking, geo-fence indicators, real-time SOS monitoring.</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </SidebarContent>
       <SidebarFooter>
         <DropdownMenu>
