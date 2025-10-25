@@ -23,13 +23,18 @@ type ZoneData = {
     weight: number;
 };
 
-type ZoneState = {
+export type ZoneDensityData = {
     people: number;
     density: number;
     intensity: number;
     color: string;
     textColor: string;
 };
+
+type CrowdDensityMonitorProps = {
+    onDataUpdate: (data: Record<string, ZoneDensityData>) => void;
+};
+
 
 const zoneKeys = Object.keys(initialZones);
 
@@ -74,9 +79,9 @@ function intensityToColor(it: number): string {
 }
 
 // --- React Component ---
-export function CrowdDensityMonitor() {
-    const [zoneStates, setZoneStates] = useState<Record<string, ZoneState>>(() => {
-        const initial: Record<string, ZoneState> = {};
+export function CrowdDensityMonitor({ onDataUpdate }: CrowdDensityMonitorProps) {
+    const [zoneStates, setZoneStates] = useState<Record<string, ZoneDensityData>>(() => {
+        const initial: Record<string, ZoneDensityData> = {};
         zoneKeys.forEach(k => {
             initial[k] = { people: 0, density: 0, intensity: 0, color: '#f5f7fa', textColor: '#111' };
         });
@@ -184,7 +189,7 @@ export function CrowdDensityMonitor() {
             const dtSec = Math.max(0.001, (now - lastTickRef.current) / 1000);
             lastTickRef.current = now;
 
-            const newStates: Record<string, ZoneState> = {};
+            const newStates: Record<string, ZoneDensityData> = {};
             zoneKeys.forEach(k => {
                 const zoneData = initialZones[k as keyof typeof initialZones];
                 const p = peopleRef.current[k];
@@ -211,6 +216,9 @@ export function CrowdDensityMonitor() {
             });
 
             setZoneStates(newStates);
+            if (onDataUpdate) {
+                onDataUpdate(newStates);
+            }
         };
         
         // Initial render
@@ -218,7 +226,7 @@ export function CrowdDensityMonitor() {
         
         const intervalId = setInterval(tick, TICK_MS);
         return () => clearInterval(intervalId);
-    }, []);
+    }, [onDataUpdate]);
 
     return (
         <Card>

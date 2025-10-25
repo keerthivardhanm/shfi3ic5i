@@ -1,13 +1,36 @@
 'use client';
 
+import * as React from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
 import { KpiCard, DensityChart, SosChart, AiPredictions, AiSummaryGenerator } from '@/components/dashboard-components';
 import { MapView } from '@/components/map-view';
-import { CrowdDensityMonitor } from '@/components/crowd-density-monitor';
+import { CrowdDensityMonitor, type ZoneDensityData } from '@/components/crowd-density-monitor';
 import { kpiData } from '@/lib/data';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 
+const MAX_HISTORY_LENGTH = 60; // Store last 60 seconds
+
 export default function AdminDashboard() {
+  const [densityHistory, setDensityHistory] = React.useState<any[]>([]);
+
+  const handleDensityUpdate = React.useCallback((newData: Record<string, ZoneDensityData>) => {
+    const now = new Date();
+    const timestamp = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+    
+    const newEntry: any = { time: timestamp };
+    for (const zoneKey in newData) {
+        newEntry[zoneKey] = newData[zoneKey].density;
+    }
+
+    setDensityHistory(prevHistory => {
+        const updatedHistory = [...prevHistory, newEntry];
+        if (updatedHistory.length > MAX_HISTORY_LENGTH) {
+            return updatedHistory.slice(updatedHistory.length - MAX_HISTORY_LENGTH);
+        }
+        return updatedHistory;
+    });
+  }, []);
+
   return (
     <div className="flex h-screen flex-row bg-muted/40">
       <AppSidebar />
@@ -37,11 +60,11 @@ export default function AdminDashboard() {
           </div>
 
           <div className="mt-6">
-            <CrowdDensityMonitor />
+            <CrowdDensityMonitor onDataUpdate={handleDensityUpdate} />
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-6 xl:grid-cols-2">
-            <DensityChart />
+            <DensityChart data={densityHistory} />
             <SosChart />
           </div>
 

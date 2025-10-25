@@ -17,7 +17,7 @@ import {
   TrendingUp,
   Users,
 } from 'lucide-react';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis, YAxis } from 'recharts';
+import { Bar, BarChart, CartesianGrid, Legend, Line, LineChart, XAxis, YAxis } from 'recharts';
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -49,11 +49,12 @@ import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, Sid
 
 
 const densityChartConfig = {
-  density: {
-    label: 'Density',
-    color: 'hsl(var(--primary))',
-  },
-} satisfies ChartConfig
+  A: { label: 'Zone A', color: 'hsl(var(--chart-1))' },
+  B: { label: 'Zone B', color: 'hsl(var(--chart-2))' },
+  C: { label: 'Zone C', color: 'hsl(var(--chart-3))' },
+  D: { label: 'Zone D', color: 'hsl(var(--chart-4))' },
+  E: { label: 'Zone E', color: 'hsl(var(--chart-5))' },
+} satisfies ChartConfig;
 
 const sosChartConfig = {
   incidents: {
@@ -213,21 +214,44 @@ export function AiPredictions() {
     )
 }
 
-export function DensityChart() {
+export function DensityChart({ data }: { data: any[] }) {
+    const [activeChart, setActiveChart] = React.useState<keyof typeof densityChartConfig | "all">("all");
+
+    const handleLegendClick = (dataKey: any) => {
+        if (typeof dataKey === 'string') {
+             if (dataKey === activeChart) {
+                setActiveChart("all");
+             } else {
+                setActiveChart(dataKey as keyof typeof densityChartConfig);
+             }
+        }
+    };
+    
     return (
         <Card>
             <CardHeader>
                 <CardTitle>Crowd Density Over Time</CardTitle>
-                <CardDescription>Last 60 minutes</CardDescription>
+                <CardDescription>Last 60 seconds (Live)</CardDescription>
             </CardHeader>
             <CardContent>
                 <ChartContainer config={densityChartConfig} className="h-64 w-full">
-                    <LineChart data={densityChartData} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
+                    <LineChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 0 }}>
                         <CartesianGrid vertical={false} strokeDasharray="3 3" />
                         <XAxis dataKey="time" tickLine={false} axisLine={false} tickMargin={8} />
-                        <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                        <YAxis tickLine={false} axisLine={false} tickMargin={8} domain={[0, 'dataMax + 1']} />
                         <ChartTooltip cursor={false} content={<ChartTooltipContent />} />
-                        <Line dataKey="density" type="monotone" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
+                        <Legend verticalAlign="top" height={40} onClick={(e) => handleLegendClick(e.dataKey)} />
+                        {Object.keys(densityChartConfig).map((zoneKey) => (
+                            <Line 
+                                key={zoneKey}
+                                dataKey={zoneKey} 
+                                type="monotone" 
+                                stroke={densityChartConfig[zoneKey as keyof typeof densityChartConfig].color}
+                                strokeWidth={2} 
+                                dot={false} 
+                                hide={activeChart !== 'all' && activeChart !== zoneKey}
+                            />
+                        ))}
                     </LineChart>
                 </ChartContainer>
             </CardContent>
