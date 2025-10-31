@@ -37,7 +37,7 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate }:
     const loadModels = async () => {
       try {
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL),
+          faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // Replaced tinyFaceDetector with ssdMobilenetv1
           faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
           faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL),
           faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
@@ -72,16 +72,14 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate }:
         faceapi.matchDimensions(canvas, displaySize);
 
         try {
-          const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks().withFaceExpressions().withAgeAndGender();
+          // Use ssdMobilenetv1 options for detection
+          const detections = await faceapi.detectAllFaces(video, new faceapi.SsdMobilenetv1Options()).withFaceLandmarks().withFaceExpressions().withAgeAndGender();
           const resizedDetections = faceapi.resizeResults(detections, displaySize);
 
           const context = canvas.getContext('2d');
           if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             faceapi.draw.drawDetections(canvas, resizedDetections);
-            // Uncomment to draw landmarks, expressions, etc.
-            // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
-            // faceapi.draw.drawFaceExpressions(canvas, resizedDetections);
           }
 
           let maleCount = 0;
