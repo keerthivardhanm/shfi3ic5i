@@ -1,20 +1,25 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
 import { InputSourceSelector, InputSource } from '@/components/input-source-selector';
-import { VideoFeed } from '@/components/video-feed';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { VideoFeed, AnalysisData } from '@/components/video-feed';
+import { AnalysisResults } from '@/components/analysis-results';
+import { useFirestore } from '@/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 export default function MonitoringPage() {
+  const firestore = useFirestore();
   const [inputSource, setInputSource] = useState<InputSource | null>(null);
   const [stream, setStream] = useState<MediaStream | null>(null);
+  const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const handleSourceSelect = async (source: InputSource) => {
     setInputSource(source);
     setError(null);
     setStream(null);
+    setAnalysisData(null); // Reset analysis data
 
     try {
       if (source.type === 'webcam') {
@@ -23,10 +28,6 @@ export default function MonitoringPage() {
       } else if (source.type === 'screen') {
         const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
         setStream(mediaStream);
-      } else if (source.type === 'file' && source.content) {
-        // The VideoFeed component will handle the file URL directly
-      } else if (source.type === 'url' && source.content) {
-        // The VideoFeed component will handle the URL directly
       }
     } catch (err) {
       console.error('Error accessing media source:', err);
@@ -41,7 +42,39 @@ export default function MonitoringPage() {
     }
     setInputSource(null);
     setStream(null);
+    setAnalysisData(null);
   }
+
+  // Effect to save analysis data to Firestore every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (firestore && analysisData && inputSource) {
+        const { peopleCount, densityLevel } = analysisData;
+        
+        const sourceInfo = (inputSource.type === 'file' && inputSource.content instanceof File)
+          ? inputSource.content.name
+          : inputSource.content as string;
+
+        addDoc(collection(firestore, 'heatmapRuns'), {
+          eventId: 'active-event-id', // Hardcoded for now
+          timestamp: serverTimestamp(),
+          sourceType: inputSource.type,
+          sourceInfo: sourceInfo,
+          zoneAnalytics: [ // Simulating for one zone for now
+            {
+              zoneId: 'monitor_zone',
+              crowdCount: peopleCount,
+              densityLevel: densityLevel,
+              alertTriggered: densityLevel === 'high',
+            }
+          ],
+          heatmapSnapshotUrl: '', // Placeholder for snapshot URL
+        });
+      }
+    }, 10000); // 10 seconds
+
+    return () => clearInterval(interval);
+  }, [analysisData, inputSource, firestore]);
 
   return (
     <div className="flex h-screen flex-row bg-muted/40">
@@ -51,29 +84,17 @@ export default function MonitoringPage() {
         <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Live Video Feed</CardTitle>
-                        <CardDescription>Real-time feed from the selected input source for crowd analysis.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <VideoFeed source={inputSource} stream={stream} onStop={handleStop} error={error} />
-                    </CardContent>
-                </Card>
+                <VideoFeed 
+                    source={inputSource} 
+                    stream={stream} 
+                    onStop={handleStop} 
+                    onError={setError}
+                    onAnalysisUpdate={setAnalysisData}
+                />
             </div>
             <div>
-                 <InputSourceSelector onSourceSelect={handleSourceSelect} />
-                 {/* Placeholder for analysis results */}
-                 <Card className="mt-6">
-                    <CardHeader>
-                        <CardTitle>Analysis & Alerts</CardTitle>
-                    </CardHeader>
-                     <CardContent>
-                        <div className="h-48 w-full rounded-md bg-muted flex items-center justify-center">
-                            <p className="text-muted-foreground">Live analysis will appear here.</p>
-                        </div>
-                    </CardContent>
-                 </Card>
+                 <InputSourceSelector onSourceSelect={handleSourceSelect} disabled={!!inputSource}/>
+                 <AnalysisResults data={analysisData} error={error} />
             </div>
           </div>
         </main>

@@ -14,9 +14,10 @@ export type InputSource = {
 
 type InputSourceSelectorProps = {
   onSourceSelect: (source: InputSource) => void;
+  disabled?: boolean;
 };
 
-export function InputSourceSelector({ onSourceSelect }: InputSourceSelectorProps) {
+export function InputSourceSelector({ onSourceSelect, disabled = false }: InputSourceSelectorProps) {
   const [url, setUrl] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -41,11 +42,11 @@ export function InputSourceSelector({ onSourceSelect }: InputSourceSelectorProps
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'webcam' })}>
+          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'webcam' })} disabled={disabled}>
             <Camera className="h-6 w-6" />
             <span>Webcam</span>
           </Button>
-          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'screen' })}>
+          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'screen' })} disabled={disabled}>
             <Monitor className="h-6 w-6" />
             <span>Screen Share</span>
           </Button>
@@ -60,8 +61,9 @@ export function InputSourceSelector({ onSourceSelect }: InputSourceSelectorProps
               placeholder="https://example.com/video.mp4"
               value={url}
               onChange={(e) => setUrl(e.target.value)}
+              disabled={disabled}
             />
-            <Button type="submit" size="icon" aria-label="Load from URL">
+            <Button type="submit" size="icon" aria-label="Load from URL" disabled={disabled}>
                 <LinkIcon className="h-4 w-4" />
             </Button>
           </form>
@@ -76,6 +78,7 @@ export function InputSourceSelector({ onSourceSelect }: InputSourceSelectorProps
             onChange={handleFileChange}
             accept="image/*,video/*"
             className="mt-1"
+            disabled={disabled}
           />
         </div>
       </CardContent>
