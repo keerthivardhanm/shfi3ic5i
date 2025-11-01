@@ -2,26 +2,27 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
-import { Button } from './ui/button';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
 import { VideoOff, AlertTriangle, Loader2 } from 'lucide-react';
-import type { AnalysisData } from './analysis-results';
-import { useToast } from '@/hooks/use-toast';
-import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 
 
-export type { AnalysisData };
+export type AnalysisData = {
+  peopleCount: number;
+  maleCount: number;
+  femaleCount: number;
+  densityLevel: 'low' | 'medium' | 'high';
+};
 
 interface VideoFeedProps {
-  camera: { id: string; name: string; url: string; zoneId: string; };
-  onAnalysisUpdate: (cameraId: string, data: AnalysisData) => void;
-  onHighDensityAlert: (cameraName: string, zoneId: string, peopleCount: number) => void;
-  onRemove: (cameraId: string) => void;
+  sourceUrl: string;
+  onAnalysisUpdate: (data: AnalysisData) => void;
+  onHighDensityAlert: () => void;
   isMuted?: boolean;
+  children?: React.ReactNode;
 }
 
-export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemove, isMuted = true }: VideoFeedProps) {
+export function VideoFeed({ sourceUrl, onAnalysisUpdate, onHighDensityAlert, isMuted = true, children }: VideoFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -53,7 +54,7 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
   // Main effect to handle video stream and analysis
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !modelsLoaded || !camera.url) return;
+    if (!video || !modelsLoaded || !sourceUrl) return;
     
     let isPlaying = false;
     
@@ -103,10 +104,10 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
             densityLevel,
           };
           
-          onAnalysisUpdate(camera.id, analysisData);
+          onAnalysisUpdate(analysisData);
           
           if(densityLevel === 'high' && !highDensityAlertSent.current) {
-              onHighDensityAlert(camera.name, camera.zoneId, peopleCount);
+              onHighDensityAlert();
               highDensityAlertSent.current = true; // Set flag to prevent spamming alerts
               setTimeout(() => { highDensityAlertSent.current = false; }, 60000); // Reset after 1 minute
           }
@@ -142,11 +143,11 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
         clearInterval(detectionInterval.current);
       }
     };
-  }, [modelsLoaded, camera.id, camera.url, camera.name, camera.zoneId, onAnalysisUpdate, onHighDensityAlert]);
+  }, [modelsLoaded, sourceUrl, onAnalysisUpdate, onHighDensityAlert]);
 
   return (
     <div className="relative w-full h-full bg-muted rounded-md overflow-hidden group/feed flex items-center justify-center text-center">
-        {!camera.url ? (
+        {!sourceUrl ? (
              <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <VideoOff className="h-10 w-10" />
                 <p className="mt-2 text-sm font-semibold">Empty Feed Slot</p>
@@ -174,19 +175,11 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
                     playsInline
                     controls
                     loop
-                    src={camera.url}
+                    src={sourceUrl}
                     crossOrigin="anonymous"
                 />
                 <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
-                <div className="absolute top-2 left-2 right-2 flex justify-between items-start z-10 p-1 bg-black/30 rounded-md opacity-0 group-hover/feed:opacity-100 transition-opacity">
-                   <div>
-                     <h4 className="font-bold text-white text-sm drop-shadow-md">{camera.name}</h4>
-                     <p className="text-white/90 text-xs drop-shadow-md">Zone: {camera.zoneId}</p>
-                   </div>
-                    <Button onClick={() => onRemove(camera.id)} size="sm" variant="destructive">
-                        Remove
-                    </Button>
-                </div>
+                {children}
             </>
         )}
     </div>
