@@ -4,7 +4,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
-import type { AnalysisData } from './video-feed';
+
+export interface AnalysisData {
+  peopleCount: number;
+  maleCount: number;
+  femaleCount: number;
+  densityLevel: 'low' | 'medium' | 'high';
+}
+
 
 interface AnalysisResultsProps {
     data: AnalysisData | null;

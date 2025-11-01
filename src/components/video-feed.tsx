@@ -4,19 +4,14 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
 import { Button } from './ui/button';
 import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { Video, VideoOff, AlertTriangle, Loader2 } from 'lucide-react';
-import type { InputSource } from './input-source-selector';
+import { VideoOff, AlertTriangle, Loader2 } from 'lucide-react';
+import type { AnalysisData } from './analysis-results';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from './ui/badge';
 import { cn } from '@/lib/utils';
 
 
-export interface AnalysisData {
-  peopleCount: number;
-  maleCount: number;
-  femaleCount: number;
-  densityLevel: 'low' | 'medium' | 'high';
-}
+export type { AnalysisData };
 
 interface VideoFeedProps {
   camera: { id: string; name: string; url: string; zoneId: string; };
@@ -58,7 +53,7 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
   // Main effect to handle video stream and analysis
   useEffect(() => {
     const video = videoRef.current;
-    if (!video || !modelsLoaded) return;
+    if (!video || !modelsLoaded || !camera.url) return;
     
     let isPlaying = false;
     
@@ -136,8 +131,8 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
     
     // Attempt to play
     video.play().catch(e => {
-        setError("Video autoplay failed. Please click play.");
-        console.error("Autoplay error:", e);
+        // Autoplay is often blocked, which is fine. User can click to play.
+        console.warn("Autoplay was blocked:", e.message);
     });
 
     return () => {
@@ -147,24 +142,7 @@ export function VideoFeed({ camera, onAnalysisUpdate, onHighDensityAlert, onRemo
         clearInterval(detectionInterval.current);
       }
     };
-  }, [modelsLoaded, camera.id, camera.name, camera.zoneId, onAnalysisUpdate, onHighDensityAlert]);
-
-  const getDensityBadge = (level: AnalysisData['densityLevel'] | undefined) => {
-        if (!level) return null;
-        const variant = {
-            low: 'default',
-            medium: 'secondary',
-            high: 'destructive'
-        }[level] || 'outline';
-        
-         const colorClass = {
-            low: 'bg-green-500 hover:bg-green-600',
-            medium: 'bg-yellow-500 hover:bg-yellow-600',
-            high: 'bg-red-600 hover:bg-red-700'
-        }[level] || '';
-
-        return <Badge className={cn("capitalize", colorClass)}>{level}</Badge>;
-    };
+  }, [modelsLoaded, camera.id, camera.url, camera.name, camera.zoneId, onAnalysisUpdate, onHighDensityAlert]);
 
   return (
     <div className="relative w-full h-full bg-muted rounded-md overflow-hidden group/feed flex items-center justify-center text-center">

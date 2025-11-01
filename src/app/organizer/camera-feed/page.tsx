@@ -3,15 +3,16 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useFirestore, useUser } from '@/firebase';
 import { doc, collection, addDoc, serverTimestamp } from 'firebase/firestore';
-import { useDoc, useCollection } from '@/firebase/firestore/use-doc';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import type { User as AppUser, Alert } from '@/lib/types';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { VideoFeed, AnalysisData } from '@/components/video-feed';
-import { ArrowLeft, Grip, PlusCircle, Users } from 'lucide-react';
+import { VideoFeed } from '@/components/video-feed';
+import type { AnalysisData } from '@/components/video-feed';
+import { ArrowLeft, PlusCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
@@ -108,7 +109,6 @@ export default function CameraFeedPage() {
     if (!firestore || !authUser) return;
 
     const message = `High congestion detected in Zone ${zoneId} near ${cameraName}. Current count: ${peopleCount}.`;
-    console.log("SENDING ALERT:", message);
 
     const newAlert: Omit<Alert, 'id'> = {
       type: 'auto',
