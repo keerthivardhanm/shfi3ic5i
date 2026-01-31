@@ -1,15 +1,16 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
 import { useFirestore, useUser } from '@/firebase';
-import { collection, doc, setDoc, deleteDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, deleteDoc, query, where } from 'firebase/firestore';
 import { useCollection } from '@/firebase/firestore/use-collection';
 import type { Zone, User } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { XCircle } from 'lucide-react';
 
 export default function ZonesPage() {
     const firestore = useFirestore();
@@ -19,14 +20,27 @@ export default function ZonesPage() {
     const [map, setMap] = useState<google.maps.Map | null>(null);
     const [status, setStatus] = useState('Initializing...');
     
-    const { data: zones, loading: zonesLoading } = useCollection<Zone>(firestore ? collection(firestore, 'zones') : null);
-    const { data: volunteers, loading: volunteersLoading } = useCollection<User>(firestore ? collection(firestore, 'users', { where: [['role', '==', 'volunteer']] }) : null);
+    const zonesQuery = useMemo(() => (firestore ? collection(firestore, 'zones') : null), [firestore]);
+    const { data: zones, loading: zonesLoading } = useCollection<Zone>(zonesQuery);
+    
+    const volunteersQuery = useMemo(() => {
+        if (!firestore) return null;
+        return query(collection(firestore, 'users'), where('role', '==', 'volunteer'));
+    }, [firestore]);
+    const { data: volunteers, loading: volunteersLoading } = useCollection<User>(volunteersQuery);
 
     const drawingManagerRef = useRef<google.maps.drawing.DrawingManager | null>(null);
     const zonePolygonsRef = useRef<Record<string, google.maps.Polygon>>({});
     const [selectedEventId, setSelectedEventId] = useState<string>('active-event-id'); // Hardcoded for now
     const [pendingSubZoneParent, setPendingSubZoneParent] = useState<string | null>(null);
 
+    const handleAddSubZoneClick = (zoneId: string) => {
+        setPendingSubZoneParent(zoneId);
+        if (drawingManagerRef.current) {
+            drawingManagerRef.current.setDrawingMode(google.maps.drawing.OverlayType.POLYGON);
+        }
+        setStatus(`Drawing sub-zone for ${zoneId}. Draw on map.`);
+    };
 
     useEffect(() => {
         if (!mapRef.current || map || !apiKey) return;
