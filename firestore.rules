@@ -30,6 +30,17 @@ service cloud.firestore {
       allow read: if isSignedIn();
       allow write: if isRole('admin') || isRole('organizer');
     }
+    
+    match /liveCrowd/{docId} {
+      allow read: if isRole('admin') || isRole('organizer');
+      allow create, update: if isRole('admin')
+        && request.resource.data.total is int
+        && request.resource.data.total >= 0
+        && request.resource.data.male is int
+        && request.resource.data.female is int
+        && request.resource.data.version in ['v1','v2','v3'];
+      allow delete: if false; // Never delete live history
+    }
 
     match /alerts/{alertId} {
       allow read: if isSignedIn();

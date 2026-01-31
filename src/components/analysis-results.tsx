@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2, Baby } from 'lucide-react';
+import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
 import type { AnalysisData } from './video-feed';
 
 
@@ -78,11 +78,6 @@ export function AnalysisResults({ data, error, sourceName }: AnalysisResultsProp
                             <Smile className="h-8 w-8 mx-auto text-pink-500" />
                              <p className="text-xl font-bold">{data.femaleCount}</p>
                             <p className="text-xs text-muted-foreground">Female</p>
-                        </div>
-                        <div>
-                            <Baby className="h-8 w-8 mx-auto text-green-500" />
-                             <p className="text-xl font-bold">{data.childrenCount}</p>
-                            <p className="text-xs text-muted-foreground">Children</p>
                         </div>
                     </div>
                 </div>

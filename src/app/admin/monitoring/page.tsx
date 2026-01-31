@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
 import { VideoFeed } from '@/components/video-feed';
 import type { AnalysisData } from '@/components/video-feed';
@@ -53,7 +53,7 @@ export default function MonitoringPage() {
     onAnalysisUpdate(null); // Clear data in firestore
   }
   
-  const onAnalysisUpdate = (data: AnalysisData | null) => {
+  const onAnalysisUpdate = useCallback((data: AnalysisData | null) => {
     setAnalysisData(data);
     // Persist data for the main dashboard
     if (firestore && data) {
@@ -62,14 +62,13 @@ export default function MonitoringPage() {
             total: data.peopleCount,
             male: data.maleCount,
             female: data.femaleCount,
-            children: data.childrenCount,
             version: 'v1',
             timestamp: serverTimestamp(),
             sourceName: source?.name || 'Unknown',
         };
         setDoc(liveDataRef, firestoreData, { merge: true });
     }
-  }
+  }, [firestore, source?.name]);
 
   return (
     <div className="flex h-screen flex-row bg-muted/40">

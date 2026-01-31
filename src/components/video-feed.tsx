@@ -12,7 +12,6 @@ export type AnalysisData = {
   peopleCount: number;
   maleCount: number;
   femaleCount: number;
-  childrenCount: number;
   densityLevel: 'low' | 'medium' | 'high';
 };
 
@@ -130,14 +129,13 @@ export function VideoFeed({
 
           const peopleCount = detections.length;
           const maleCount = detections.filter(d => d.gender === 'male').length;
-          const childrenCount = detections.filter(d => d.age < 18).length;
-          const femaleCount = peopleCount - maleCount - childrenCount;
+          const femaleCount = peopleCount - maleCount;
           
           let densityLevel: AnalysisData['densityLevel'] = 'low';
           if (peopleCount > 20) densityLevel = 'high';
           else if (peopleCount > 8) densityLevel = 'medium';
           
-          onAnalysisUpdate({ peopleCount, maleCount, femaleCount, childrenCount, densityLevel });
+          onAnalysisUpdate({ peopleCount, maleCount, femaleCount, densityLevel });
 
         } catch (error) {
             console.error("Error during face detection:", error);
