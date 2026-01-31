@@ -16,7 +16,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Siren, CheckCircle, Rocket, AlertTriangle, Users } from 'lucide-react';
+import { Siren, CheckCircle, Rocket, AlertTriangle, Users, WifiOff } from 'lucide-react';
 import { Kpi } from '@/lib/types';
 
 
@@ -133,7 +133,7 @@ export default function AdminDashboard() {
       title: 'Live Feed Count',
       value: crowdLoading ? '...' : (liveCrowdData?.total ?? 0).toString(),
       change: liveCrowdData?.sourceName || 'N/A',
-      changeType: 'increase', // Not applicable here, but type requires it
+      changeType: 'increase',
       icon: Users,
     },
     {
@@ -186,17 +186,7 @@ export default function AdminDashboard() {
 
           <div className="mt-6 grid grid-cols-1 gap-6">
              <div className="lg:col-span-3">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Event Map Disabled</CardTitle>
-                        <CardDescription>The interactive map is currently disabled.</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="h-[60vh] w-full rounded-md bg-muted flex items-center justify-center p-8 text-center">
-                            <p className="text-muted-foreground">The Google Maps feature requires a valid API key with billing enabled. Please update your project configuration to use the map features.</p>
-                        </div>
-                    </CardContent>
-                </Card>
+                <ReadOnlyMap />
             </div>
           </div>
 

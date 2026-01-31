@@ -6,6 +6,7 @@ import { VideoOff, Loader2, ZoomIn, ZoomOut, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { InputSource } from './input-source-selector';
 import { Button } from './ui/button';
+import { useToast } from '@/hooks/use-toast';
 
 export type AnalysisData = {
   peopleCount: number;
@@ -20,7 +21,6 @@ interface VideoFeedProps {
   onStop: () => void;
   onError: (error: string | null) => void;
   onAnalysisUpdate: (data: AnalysisData | null) => void;
-  children?: React.ReactNode;
   isMuted?: boolean;
   isSelected?: boolean;
 }
@@ -30,10 +30,10 @@ export function VideoFeed({
     onStop, 
     onError, 
     onAnalysisUpdate, 
-    children, 
     isMuted = true,
     isSelected = false 
 }: VideoFeedProps) {
+  const { toast } = useToast();
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
@@ -55,7 +55,7 @@ export function VideoFeed({
         setModelsLoaded(true);
       } catch (error) {
         console.error("Failed to load models:", error);
-        onError("Could not load analysis models.");
+        onError("Could not load analysis models. Please refresh.");
       }
     };
     loadModels();
@@ -66,6 +66,8 @@ export function VideoFeed({
     const video = videoRef.current;
     if (!video) return;
 
+    let stream: MediaStream | null = null;
+
     const cleanup = () => {
         if (detectionInterval.current) {
             clearInterval(detectionInterval.current);
@@ -74,13 +76,16 @@ export function VideoFeed({
         if (video.src.startsWith('blob:')) {
             URL.revokeObjectURL(video.src);
         }
+        if (stream) {
+            stream.getTracks().forEach(track => track.stop());
+        }
+        video.src = "";
+        video.srcObject = null;
     };
 
     if (!source) {
         cleanup();
         onAnalysisUpdate(null);
-        video.src = "";
-        video.srcObject = null;
         return;
     }
     
@@ -106,7 +111,7 @@ export function VideoFeed({
           if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             // Draw heatmap-like circles
-             resizedDetections.forEach(d => {
+            resizedDetections.forEach(d => {
                 const {x, y, width, height} = d.detection.box;
                 const centerX = x + width / 2;
                 const centerY = y + height / 2;
@@ -125,8 +130,8 @@ export function VideoFeed({
 
           const peopleCount = detections.length;
           const maleCount = detections.filter(d => d.gender === 'male').length;
-          const femaleCount = peopleCount - maleCount - detections.filter(d => d.age < 18).length;
           const childrenCount = detections.filter(d => d.age < 18).length;
+          const femaleCount = peopleCount - maleCount - childrenCount;
           
           let densityLevel: AnalysisData['densityLevel'] = 'low';
           if (peopleCount > 20) densityLevel = 'high';
@@ -136,38 +141,51 @@ export function VideoFeed({
 
         } catch (error) {
             console.error("Error during face detection:", error);
-            if (detectionInterval.current) clearInterval(detectionInterval.current);
         }
       }, 1500);
     };
 
-    const loadSource = () => {
+    const loadSource = async () => {
         cleanup();
         setIsLoading(true);
         onError(null);
 
         try {
-            if (source.type === 'url' && typeof source.content === 'string') {
-                video.src = source.content;
-                video.crossOrigin = 'anonymous';
-            } else if (source.type === 'file' && source.content instanceof File) {
-                video.src = URL.createObjectURL(source.content);
-            } else {
-                setIsLoading(false);
-                return;
+            switch(source.type) {
+                case 'url':
+                    if (typeof source.content === 'string') {
+                         video.src = source.content;
+                         video.crossOrigin = 'anonymous';
+                    }
+                    break;
+                case 'file':
+                    if (source.content instanceof File) {
+                        video.src = URL.createObjectURL(source.content);
+                    }
+                    break;
+                case 'webcam':
+                    stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    break;
+                case 'screen':
+                    stream = await navigator.mediaDevices.getDisplayMedia({ video: true });
+                    video.srcObject = stream;
+                    break;
+                default:
+                    setIsLoading(false);
+                    return;
             }
 
             video.onloadedmetadata = () => {
-                video.play().catch(e => console.warn("Autoplay was blocked:", e));
+                video.play().catch(e => {
+                    console.warn("Autoplay was blocked:", e);
+                    toast({ variant: 'destructive', title: 'Autoplay Blocked', description: 'Please click the play button on the video.' });
+                });
             };
-
             video.onplay = () => {
                 setIsLoading(false);
-                if (modelsLoaded && isSelected) {
-                    startAnalysis();
-                }
+                if (modelsLoaded && isSelected) startAnalysis();
             };
-            
             video.onerror = () => {
                 onError(`Failed to load video from ${source.type}.`);
                 setIsLoading(false);
@@ -175,15 +193,14 @@ export function VideoFeed({
 
         } catch (err) {
             console.error("Error setting up video source:", err);
-            onError("Failed to load the selected video source.");
+            onError(`Could not access ${source.type}. Please check permissions.`);
             setIsLoading(false);
         }
     };
     
     loadSource();
 
-    // Start/stop analysis when selection changes
-    if (isSelected && modelsLoaded && !detectionInterval.current) {
+    if (isSelected && modelsLoaded && !isLoading && !detectionInterval.current) {
         startAnalysis();
     } else if (!isSelected && detectionInterval.current) {
         clearInterval(detectionInterval.current);
@@ -192,9 +209,8 @@ export function VideoFeed({
 
     return cleanup;
     
-  }, [source, modelsLoaded, isSelected, onAnalysisUpdate, onError]);
+  }, [source, modelsLoaded, isSelected, onAnalysisUpdate, onError, toast]);
     
-
   const renderOverlay = () => {
       if (isLoading) {
           return (
@@ -216,7 +232,7 @@ export function VideoFeed({
   }
 
   return (
-    <div className="relative w-full h-full bg-muted rounded-md overflow-hidden flex items-center justify-center text-center">
+    <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden flex items-center justify-center text-center">
         {renderOverlay()}
         {!source && (
              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
@@ -232,10 +248,10 @@ export function VideoFeed({
             muted={isMuted}
             playsInline
             loop
+            controls={!isSelected}
         />
         <canvas ref={canvasRef} className={cn("absolute top-0 left-0 w-full h-full pointer-events-none transition-transform duration-300", !isSelected && 'hidden')} style={{ transform: `scale(${zoom})` }} />
-        {children}
-
+        
         {isSelected && (
             <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
                  <Button size="icon" onClick={() => setZoom(z => Math.min(z + 0.2, 3))}>

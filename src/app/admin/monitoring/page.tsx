@@ -2,17 +2,19 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
-import { VideoFeed, AnalysisData } from '@/components/video-feed';
+import { VideoFeed } from '@/components/video-feed';
+import type { AnalysisData } from '@/components/video-feed';
 import { AnalysisResults } from '@/components/analysis-results';
+import { InputSourceSelector, type InputSource } from '@/components/input-source-selector';
 import { useFirestore } from '@/firebase';
 import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
-import type { InputSource } from '@/components/input-source-selector';
 import { Button } from '@/components/ui/button';
-import { Maximize, Grid } from 'lucide-react';
+import { XCircle, Maximize, Grid } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { LiveCrowdData } from '@/lib/types';
+import type { LiveCrowdData } from '@/lib/types';
 
 
+// Sample videos of moving crowds for the grid
 const sampleVideos = [
     "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerCrowds.mp4",
     "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
@@ -25,7 +27,7 @@ const sampleVideos = [
     "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
 ];
 
-const initialSources: InputSource[] = sampleVideos.map((url, i) => ({
+const initialGridSources: InputSource[] = sampleVideos.map((url, i) => ({
     type: 'url',
     content: url,
     id: `cam-${i + 1}`,
@@ -35,21 +37,18 @@ const initialSources: InputSource[] = sampleVideos.map((url, i) => ({
 
 export default function MonitoringPage() {
   const firestore = useFirestore();
-  const [sources, setSources] = useState<InputSource[]>(initialSources);
-  const [focusedSource, setFocusedSource] = useState<InputSource | null>(null);
+  const [source, setSource] = useState<InputSource | null>(null);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const viewMode = focusedSource ? 'focused' : 'grid';
-
-  const handleSourceSelect = (source: InputSource) => {
-    setFocusedSource(source);
+  
+  const handleSourceSelect = (selectedSource: InputSource) => {
+    setSource(selectedSource);
     setError(null);
     setAnalysisData(null); // Reset analysis data when switching
   };
   
   const handleStop = () => {
-    setFocusedSource(null);
+    setSource(null);
     setAnalysisData(null);
     onAnalysisUpdate(null); // Clear data in firestore
   }
@@ -66,7 +65,7 @@ export default function MonitoringPage() {
             children: data.childrenCount,
             version: 'v1',
             timestamp: serverTimestamp(),
-            sourceName: focusedSource?.name || 'Unknown',
+            sourceName: source?.name || 'Unknown',
         };
         setDoc(liveDataRef, firestoreData, { merge: true });
     }
@@ -78,53 +77,49 @@ export default function MonitoringPage() {
       <div className="flex flex-1 flex-col">
         <AppHeader />
         <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 gap-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold">Live Monitoring</h1>
-                {viewMode === 'focused' && (
-                    <Button variant="outline" onClick={() => setFocusedSource(null)}>
-                        <Grid className="mr-2 h-4 w-4" />
-                        Back to Grid View
-                    </Button>
-                )}
-            </div>
-            
-            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className={cn("lg:col-span-2 grid gap-4 transition-all duration-300", 
-                    viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'
-                )}>
-                    {viewMode === 'grid' ? (
-                        sources.map(source => (
-                            <div key={source.id} className="relative group/feed aspect-video">
-                                <VideoFeed
-                                    source={source} 
-                                    onAnalysisUpdate={() => {}} // Grid view doesn't need individual analysis updates
-                                    onError={()=>{}}
-                                    isMuted={true}
-                                />
-                                <div 
-                                    onClick={() => handleSourceSelect(source)}
-                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/feed:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"
-                                >
-                                    <Maximize className="h-10 w-10 text-white" />
-                                </div>
-                                <div className="absolute top-2 left-2 p-1 bg-black/50 rounded-md text-white text-xs font-bold">
-                                    {source.name}
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                       <VideoFeed 
-                            source={focusedSource} 
-                            onStop={handleStop} 
-                            onError={setError}
-                            onAnalysisUpdate={onAnalysisUpdate}
-                            isMuted={false}
-                            isSelected={true}
-                        />
-                    )}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <VideoFeed 
+                        source={source} 
+                        onStop={handleStop} 
+                        onError={setError}
+                        onAnalysisUpdate={onAnalysisUpdate}
+                        isMuted={false}
+                        isSelected={!!source}
+                    />
                 </div>
-                <div className="lg:col-span-1">
-                     <AnalysisResults data={analysisData} error={error} sourceName={focusedSource?.name} />
+                <div className="lg:col-span-1 space-y-6">
+                    <InputSourceSelector onSourceSelect={handleSourceSelect} disabled={!!source} />
+                    <AnalysisResults data={analysisData} error={error} sourceName={source?.name} />
+                </div>
+            </div>
+
+            <div>
+                <h2 className="text-xl font-bold mb-4">Sample Feeds</h2>
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+                     {initialGridSources.map(gridSource => (
+                        <div key={gridSource.id} className="relative group/feed aspect-video">
+                            <video
+                                src={gridSource.content as string}
+                                muted
+                                loop
+                                playsInline
+                                className="w-full h-full object-cover rounded-md bg-black"
+                            />
+                            <div 
+                                onClick={() => !source && handleSourceSelect(gridSource)}
+                                className={cn(
+                                    "absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity",
+                                    source ? "cursor-not-allowed" : "cursor-pointer opacity-0 group-hover/feed:opacity-100"
+                                )}
+                            >
+                                {!source && <Maximize className="h-10 w-10 text-white" />}
+                            </div>
+                            <div className="absolute top-2 left-2 p-1 bg-black/50 rounded-md text-white text-xs font-bold">
+                                {gridSource.name}
+                            </div>
+                        </div>
+                    ))}
                 </div>
             </div>
         </main>

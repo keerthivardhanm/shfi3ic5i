@@ -4,14 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2, Baby } from 'lucide-react';
-
-export interface AnalysisData {
-  peopleCount: number;
-  maleCount: number;
-  femaleCount: number;
-  childrenCount: number;
-  densityLevel: 'low' | 'medium' | 'high';
-}
+import type { AnalysisData } from './video-feed';
 
 
 interface AnalysisResultsProps {
@@ -49,10 +42,10 @@ export function AnalysisResults({ data, error, sourceName }: AnalysisResultsProp
 
         if (!data) {
             return (
-                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
+                <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground p-4">
                     <Loader2 className="h-8 w-8 animate-spin mb-4" />
                     <p className="font-semibold">Awaiting video source</p>
-                    <p className="text-sm">Select a feed from the grid to start analysis.</p>
+                    <p className="text-sm">Select an input source to start analysis.</p>
                 </div>
             );
         }
@@ -74,7 +67,7 @@ export function AnalysisResults({ data, error, sourceName }: AnalysisResultsProp
                     {getDensityBadge(data.densityLevel)}
                 </div>
                 <div>
-                    <p className="font-medium mb-2">Demographics (Simulated)</p>
+                    <p className="font-medium mb-2">Demographics (Est.)</p>
                     <div className="flex items-center justify-around text-center">
                         <div>
                              <Frown className="h-8 w-8 mx-auto text-blue-500" />
@@ -116,7 +109,7 @@ export function AnalysisResults({ data, error, sourceName }: AnalysisResultsProp
                 <CardTitle>Live Analysis {sourceName ? ` - ${sourceName}` : ''}</CardTitle>
                 <CardDescription>Real-time metrics from the selected video feed.</CardDescription>
             </CardHeader>
-             <CardContent>
+             <CardContent className="min-h-[300px]">
                 {renderContent()}
             </CardContent>
         </Card>

@@ -22,6 +22,8 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -37,10 +39,12 @@ export default function RootLayout({
             {children}
         </FirebaseClientProvider>
         <Toaster />
-        <Script
-          src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}&libraries=drawing,geometry,visualization&callback=Function.prototype`}
-          strategy="afterInteractive"
-        />
+        {mapsApiKey && (
+            <Script
+                src={`https://maps.googleapis.com/maps/api/js?key=${mapsApiKey}&libraries=drawing,geometry,visualization`}
+                strategy="afterInteractive"
+            />
+        )}
       </body>
     </html>
   );
