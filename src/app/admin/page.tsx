@@ -5,17 +5,20 @@ import { AppHeader, AppSidebar } from '@/components/dashboard-components';
 import { KpiCard, DensityChart, AiPredictions, AiSummaryGenerator } from '@/components/dashboard-components';
 import { ReadOnlyMap } from '@/components/read-only-map';
 import { CrowdDensityMonitor, type ZoneDensityData } from '@/components/crowd-density-monitor';
-import { kpiData } from '@/lib/data';
+import { kpiData as staticKpiData } from '@/lib/data';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription, CardFooter } from '@/components/ui/card';
 import { useCollection } from '@/firebase/firestore/use-collection';
+import { useDoc } from '@/firebase/firestore/use-doc';
 import { useFirestore } from '@/firebase';
 import { collection, query, where, orderBy, doc, updateDoc } from 'firebase/firestore';
-import { SOSReport } from '@/lib/types';
+import { SOSReport, LiveCrowdData } from '@/lib/types';
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
-import { Siren, CheckCircle, Rocket } from 'lucide-react';
+import { Siren, CheckCircle, Rocket, AlertTriangle, Users } from 'lucide-react';
+import { Kpi } from '@/lib/types';
+
 
 function SosAlertFeed() {
   const firestore = useFirestore();
@@ -79,7 +82,7 @@ function SosAlertFeed() {
                             {getStatusBadge(report.status)}
                         </div>
                         <p className="text-sm text-muted-foreground">
-                            {report.description || 'No description provided.'}
+                            {report.message || 'No description provided.'}
                         </p>
                         <p className="text-xs text-muted-foreground mt-1">
                             {formatDistanceToNow(new Date(report.timestamp), { addSuffix: true })} from user {report.userId.substring(0,5)}...
@@ -112,7 +115,44 @@ function SosAlertFeed() {
 
 
 export default function AdminDashboard() {
+  const firestore = useFirestore();
   const [densityHistory, setDensityHistory] = React.useState<any[]>([]);
+
+  // Live data for KPIs
+  const sosQuery = React.useMemo(() => firestore ? query(collection(firestore, 'sosReports'), where('status', '!=', 'resolved')) : null, [firestore]);
+  const { data: activeAlerts, loading: alertsLoading } = useCollection<SOSReport>(sosQuery);
+
+  const liveCrowdDoc = React.useMemo(() => firestore ? doc(firestore, 'liveCrowd', 'mainFeed') : null, [firestore]);
+  const { data: liveCrowdData, loading: crowdLoading } = useDoc<LiveCrowdData>(liveCrowdDoc);
+  
+  // In a real app, you'd fetch high-risk zones from Firestore based on density/intensity
+  const highRiskZonesCount = 2; // Placeholder
+
+  const kpiData: Kpi[] = [
+    {
+      title: 'Live Feed Count',
+      value: crowdLoading ? '...' : (liveCrowdData?.total ?? 0).toString(),
+      change: liveCrowdData?.sourceName || 'N/A',
+      changeType: 'increase', // Not applicable here, but type requires it
+      icon: Users,
+    },
+    {
+      title: 'Active SOS Alerts',
+      value: alertsLoading ? '...' : (activeAlerts?.length ?? 0).toString(),
+      change: 'from all zones',
+      changeType: 'increase',
+      icon: Siren,
+    },
+    {
+      title: 'High-Risk Zones',
+      value: highRiskZonesCount.toString(),
+      change: 'based on density',
+      changeType: 'decrease',
+      icon: AlertTriangle,
+    },
+    {...staticKpiData[3]} // Avg. Response Time
+  ];
+
 
   const handleDensityUpdate = React.useCallback((newData: Record<string, ZoneDensityData>) => {
     const now = new Date();
@@ -146,7 +186,17 @@ export default function AdminDashboard() {
 
           <div className="mt-6 grid grid-cols-1 gap-6">
              <div className="lg:col-span-3">
-                <ReadOnlyMap />
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Event Map Disabled</CardTitle>
+                        <CardDescription>The interactive map is currently disabled.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        <div className="h-[60vh] w-full rounded-md bg-muted flex items-center justify-center p-8 text-center">
+                            <p className="text-muted-foreground">The Google Maps feature requires a valid API key with billing enabled. Please update your project configuration to use the map features.</p>
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
           </div>
 

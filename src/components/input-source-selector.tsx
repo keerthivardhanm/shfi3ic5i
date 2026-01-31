@@ -8,6 +8,8 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export type InputSource = {
+  id: string;
+  name: string;
   type: 'webcam' | 'screen' | 'url' | 'file';
   content?: string | File;
 };
@@ -24,14 +26,14 @@ export function InputSourceSelector({ onSourceSelect, disabled = false }: InputS
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      onSourceSelect({ type: 'file', content: file });
+      onSourceSelect({ id: `file-${Date.now()}`, name: file.name, type: 'file', content: file });
     }
   };
   
   const handleUrlSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if(url) {
-        onSourceSelect({ type: 'url', content: url });
+        onSourceSelect({ id: `url-${Date.now()}`, name: 'Remote Stream', type: 'url', content: url });
     }
   }
 
@@ -42,11 +44,11 @@ export function InputSourceSelector({ onSourceSelect, disabled = false }: InputS
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'webcam' })} disabled={disabled}>
+          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ id: 'webcam', name: 'Webcam', type: 'webcam' })} disabled={disabled}>
             <Camera className="h-6 w-6" />
             <span>Webcam</span>
           </Button>
-          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ type: 'screen' })} disabled={disabled}>
+          <Button variant="outline" className="h-20 flex-col" onClick={() => onSourceSelect({ id: 'screen', name: 'Screen Share', type: 'screen' })} disabled={disabled}>
             <Monitor className="h-6 w-6" />
             <span>Screen Share</span>
           </Button>

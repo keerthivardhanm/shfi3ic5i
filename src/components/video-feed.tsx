@@ -2,33 +2,43 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
-import { Alert, AlertDescription, AlertTitle } from './ui/alert';
-import { VideoOff, AlertTriangle, Loader2 } from 'lucide-react';
+import { VideoOff, Loader2, ZoomIn, ZoomOut, XCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { InputSource } from './input-source-selector';
-
+import { Button } from './ui/button';
 
 export type AnalysisData = {
   peopleCount: number;
   maleCount: number;
   femaleCount: number;
+  childrenCount: number;
   densityLevel: 'low' | 'medium' | 'high';
 };
 
 interface VideoFeedProps {
   source: InputSource | null;
-  stream: MediaStream | null;
   onStop: () => void;
   onError: (error: string | null) => void;
   onAnalysisUpdate: (data: AnalysisData | null) => void;
   children?: React.ReactNode;
+  isMuted?: boolean;
+  isSelected?: boolean;
 }
 
-export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, children }: VideoFeedProps) {
+export function VideoFeed({ 
+    source, 
+    onStop, 
+    onError, 
+    onAnalysisUpdate, 
+    children, 
+    isMuted = true,
+    isSelected = false 
+}: VideoFeedProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [zoom, setZoom] = useState(1);
   const detectionInterval = useRef<NodeJS.Timeout | null>(null);
 
   const MODEL_URL = 'https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/model';
@@ -59,18 +69,18 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
     const cleanup = () => {
         if (detectionInterval.current) {
             clearInterval(detectionInterval.current);
+            detectionInterval.current = null;
         }
-        // The parent component is responsible for stopping the stream.
-        if (video && video.src.startsWith('blob:')) {
+        if (video.src.startsWith('blob:')) {
             URL.revokeObjectURL(video.src);
         }
-        video.src = "";
-        video.srcObject = null;
     };
 
     if (!source) {
         cleanup();
         onAnalysisUpdate(null);
+        video.src = "";
+        video.srcObject = null;
         return;
     }
     
@@ -78,7 +88,7 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
       if (detectionInterval.current) clearInterval(detectionInterval.current);
 
       detectionInterval.current = setInterval(async () => {
-        if (!video || video.paused || video.ended) return;
+        if (!video || video.paused || video.ended || !isSelected) return;
 
         const canvas = canvasRef.current;
         if (!canvas) return;
@@ -95,26 +105,40 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
           const context = canvas.getContext('2d');
           if (context) {
             context.clearRect(0, 0, canvas.width, canvas.height);
+            // Draw heatmap-like circles
+             resizedDetections.forEach(d => {
+                const {x, y, width, height} = d.detection.box;
+                const centerX = x + width / 2;
+                const centerY = y + height / 2;
+                
+                const gradient = context.createRadialGradient(centerX, centerY, 0, centerX, centerY, width * 0.7);
+                gradient.addColorStop(0, 'rgba(255, 0, 0, 0.6)');
+                gradient.addColorStop(1, 'rgba(255, 0, 0, 0)');
+                
+                context.beginPath();
+                context.arc(centerX, centerY, width * 0.7, 0, 2 * Math.PI);
+                context.fillStyle = gradient;
+                context.fill();
+            });
             faceapi.draw.drawDetections(canvas, resizedDetections);
           }
 
           const peopleCount = detections.length;
           const maleCount = detections.filter(d => d.gender === 'male').length;
-          const femaleCount = peopleCount - maleCount;
+          const femaleCount = peopleCount - maleCount - detections.filter(d => d.age < 18).length;
+          const childrenCount = detections.filter(d => d.age < 18).length;
           
           let densityLevel: AnalysisData['densityLevel'] = 'low';
           if (peopleCount > 20) densityLevel = 'high';
           else if (peopleCount > 8) densityLevel = 'medium';
           
-          onAnalysisUpdate({ peopleCount, maleCount, femaleCount, densityLevel });
+          onAnalysisUpdate({ peopleCount, maleCount, femaleCount, childrenCount, densityLevel });
 
         } catch (error) {
             console.error("Error during face detection:", error);
-            // Don't spam errors in UI
-            // onError("Analysis failed on this feed.");
             if (detectionInterval.current) clearInterval(detectionInterval.current);
         }
-      }, 1500); // Slower interval for better performance
+      }, 1500);
     };
 
     const loadSource = () => {
@@ -123,9 +147,7 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
         onError(null);
 
         try {
-            if (stream) {
-                video.srcObject = stream;
-            } else if (source.type === 'url' && typeof source.content === 'string') {
+            if (source.type === 'url' && typeof source.content === 'string') {
                 video.src = source.content;
                 video.crossOrigin = 'anonymous';
             } else if (source.type === 'file' && source.content instanceof File) {
@@ -136,27 +158,20 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
             }
 
             video.onloadedmetadata = () => {
-                video.play().catch(e => {
-                    console.warn("Autoplay was blocked:", e);
-                    onError("Autoplay blocked. Please press play on the video.");
-                });
+                video.play().catch(e => console.warn("Autoplay was blocked:", e));
             };
 
             video.onplay = () => {
                 setIsLoading(false);
-                if (modelsLoaded) {
+                if (modelsLoaded && isSelected) {
                     startAnalysis();
                 }
             };
             
             video.onerror = () => {
-                const errorMessage = `Failed to load video from ${source.type}. Check URL or file format.`;
-                console.error(errorMessage, video.error);
-                onError(errorMessage);
+                onError(`Failed to load video from ${source.type}.`);
                 setIsLoading(false);
             };
-
-            video.onended = onStop;
 
         } catch (err) {
             console.error("Error setting up video source:", err);
@@ -167,9 +182,17 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
     
     loadSource();
 
+    // Start/stop analysis when selection changes
+    if (isSelected && modelsLoaded && !detectionInterval.current) {
+        startAnalysis();
+    } else if (!isSelected && detectionInterval.current) {
+        clearInterval(detectionInterval.current);
+        detectionInterval.current = null;
+    }
+
     return cleanup;
     
-  }, [source, stream, modelsLoaded, onAnalysisUpdate, onError, onStop]);
+  }, [source, modelsLoaded, isSelected, onAnalysisUpdate, onError]);
     
 
   const renderOverlay = () => {
@@ -193,7 +216,7 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
   }
 
   return (
-    <div className="relative w-full aspect-video bg-muted rounded-md overflow-hidden group/feed flex items-center justify-center text-center">
+    <div className="relative w-full h-full bg-muted rounded-md overflow-hidden flex items-center justify-center text-center">
         {renderOverlay()}
         {!source && (
              <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-4">
@@ -204,14 +227,28 @@ export function VideoFeed({ source, stream, onStop, onError, onAnalysisUpdate, c
         )}
         <video
             ref={videoRef}
-            className={cn("w-full h-full object-cover", !source && "hidden")}
-            muted
+            className={cn("w-full h-full object-contain transition-transform duration-300", !source && "hidden")}
+            style={{ transform: `scale(${zoom})` }}
+            muted={isMuted}
             playsInline
-            controls={!!(source && (source.type === 'file' || source.type === 'url'))}
-            loop={!!(source && (source.type === 'file' || source.type === 'url'))}
+            loop
         />
-        <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full pointer-events-none" />
+        <canvas ref={canvasRef} className={cn("absolute top-0 left-0 w-full h-full pointer-events-none transition-transform duration-300", !isSelected && 'hidden')} style={{ transform: `scale(${zoom})` }} />
         {children}
+
+        {isSelected && (
+            <div className="absolute bottom-4 right-4 z-20 flex items-center gap-2">
+                 <Button size="icon" onClick={() => setZoom(z => Math.min(z + 0.2, 3))}>
+                    <ZoomIn />
+                </Button>
+                <Button size="icon" onClick={() => setZoom(z => Math.max(z - 0.2, 1))}>
+                    <ZoomOut />
+                </Button>
+                 <Button size="icon" variant="destructive" onClick={onStop}>
+                    <XCircle />
+                </Button>
+            </div>
+        )}
     </div>
   );
 }

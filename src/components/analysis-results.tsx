@@ -3,12 +3,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
-import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2 } from 'lucide-react';
+import { Users, Smile, Frown, Sparkles, AlertTriangle, Loader2, Baby } from 'lucide-react';
 
 export interface AnalysisData {
   peopleCount: number;
   maleCount: number;
   femaleCount: number;
+  childrenCount: number;
   densityLevel: 'low' | 'medium' | 'high';
 }
 
@@ -16,9 +17,10 @@ export interface AnalysisData {
 interface AnalysisResultsProps {
     data: AnalysisData | null;
     error: string | null;
+    sourceName?: string;
 }
 
-export function AnalysisResults({ data, error }: AnalysisResultsProps) {
+export function AnalysisResults({ data, error, sourceName }: AnalysisResultsProps) {
     
     const getDensityBadge = (level: AnalysisData['densityLevel'] | undefined) => {
         if (!level) return <Badge variant="outline">Unknown</Badge>;
@@ -50,7 +52,7 @@ export function AnalysisResults({ data, error }: AnalysisResultsProps) {
                 <div className="h-full flex flex-col items-center justify-center text-center text-muted-foreground">
                     <Loader2 className="h-8 w-8 animate-spin mb-4" />
                     <p className="font-semibold">Awaiting video source</p>
-                    <p className="text-sm">Analysis will begin once a feed is active.</p>
+                    <p className="text-sm">Select a feed from the grid to start analysis.</p>
                 </div>
             );
         }
@@ -72,7 +74,7 @@ export function AnalysisResults({ data, error }: AnalysisResultsProps) {
                     {getDensityBadge(data.densityLevel)}
                 </div>
                 <div>
-                    <p className="font-medium mb-2">Gender Ratio (Simulated)</p>
+                    <p className="font-medium mb-2">Demographics (Simulated)</p>
                     <div className="flex items-center justify-around text-center">
                         <div>
                              <Frown className="h-8 w-8 mx-auto text-blue-500" />
@@ -84,6 +86,11 @@ export function AnalysisResults({ data, error }: AnalysisResultsProps) {
                              <p className="text-xl font-bold">{data.femaleCount}</p>
                             <p className="text-xs text-muted-foreground">Female</p>
                         </div>
+                        <div>
+                            <Baby className="h-8 w-8 mx-auto text-green-500" />
+                             <p className="text-xl font-bold">{data.childrenCount}</p>
+                            <p className="text-xs text-muted-foreground">Children</p>
+                        </div>
                     </div>
                 </div>
                  <div className="space-y-2 pt-2">
@@ -94,7 +101,7 @@ export function AnalysisResults({ data, error }: AnalysisResultsProps) {
                     <Alert>
                         <AlertDescription>
                            {data.densityLevel === 'high' 
-                               ? "High density detected. Consider redirecting foot traffic from Zone B."
+                               ? `High density detected in ${sourceName || 'feed'}. Consider redirecting foot traffic.`
                                : "Crowd levels are normal. Continue monitoring."}
                         </AlertDescription>
                     </Alert>
@@ -104,10 +111,10 @@ export function AnalysisResults({ data, error }: AnalysisResultsProps) {
     }
 
     return (
-        <Card className="mt-6">
+        <Card>
             <CardHeader>
-                <CardTitle>Live Analysis</CardTitle>
-                <CardDescription>Real-time metrics from the video feed.</CardDescription>
+                <CardTitle>Live Analysis {sourceName ? ` - ${sourceName}` : ''}</CardTitle>
+                <CardDescription>Real-time metrics from the selected video feed.</CardDescription>
             </CardHeader>
              <CardContent>
                 {renderContent()}

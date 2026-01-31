@@ -85,7 +85,7 @@ export type SOSReport = {
     zoneId: string;
     eventId: string;
     type: string;
-    description: string;
+    message: string;
     location: {
         lat: number;
         lng: number;
@@ -94,3 +94,13 @@ export type SOSReport = {
     status: 'pending' | 'dispatched' | 'resolved';
     timestamp: string; // ISO 8601 format
 };
+
+export type LiveCrowdData = {
+    total: number;
+    male: number;
+    female: number;
+    children: number;
+    version: 'v1' | 'v2' | 'v3';
+    timestamp: Timestamp | any;
+    sourceName: string;
+}

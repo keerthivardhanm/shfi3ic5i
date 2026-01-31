@@ -1,116 +1,132 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { AppHeader, AppSidebar } from '@/components/dashboard-components';
-import { InputSourceSelector, InputSource } from '@/components/input-source-selector';
 import { VideoFeed, AnalysisData } from '@/components/video-feed';
 import { AnalysisResults } from '@/components/analysis-results';
 import { useFirestore } from '@/firebase';
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { collection, doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import type { InputSource } from '@/components/input-source-selector';
+import { Button } from '@/components/ui/button';
+import { Maximize, Grid } from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { LiveCrowdData } from '@/lib/types';
+
+
+const sampleVideos = [
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerCrowds.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/SubaruOutbackOnStreetAndDirt.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/WeAreGoingOnBullrun.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4",
+    "https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4",
+];
+
+const initialSources: InputSource[] = sampleVideos.map((url, i) => ({
+    type: 'url',
+    content: url,
+    id: `cam-${i + 1}`,
+    name: `Cam ${i + 1}`
+}));
+
 
 export default function MonitoringPage() {
   const firestore = useFirestore();
-  const [inputSource, setInputSource] = useState<InputSource | null>(null);
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const [sources, setSources] = useState<InputSource[]>(initialSources);
+  const [focusedSource, setFocusedSource] = useState<InputSource | null>(null);
   const [analysisData, setAnalysisData] = useState<AnalysisData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const handleSourceSelect = async (source: InputSource) => {
-    setInputSource(source);
-    setError(null);
-    setStream(null);
-    setAnalysisData(null); // Reset analysis data
+  const viewMode = focusedSource ? 'focused' : 'grid';
 
-    try {
-      if (source.type === 'webcam') {
-        const mediaStream = await navigator.mediaDevices.getUserMedia({ video: true });
-        setStream(mediaStream);
-      } else if (source.type === 'screen') {
-        const mediaStream = await navigator.mediaDevices.getDisplayMedia({ video: true });
-        setStream(mediaStream);
-      }
-    } catch (err) {
-      console.error('Error accessing media source:', err);
-      setError(`Could not access ${source.type}. Please check permissions and try again.`);
-      setInputSource(null);
-    }
+  const handleSourceSelect = (source: InputSource) => {
+    setFocusedSource(source);
+    setError(null);
+    setAnalysisData(null); // Reset analysis data when switching
   };
   
   const handleStop = () => {
-    if (stream) {
-      stream.getTracks().forEach(track => track.stop());
-    }
-    setInputSource(null);
-    setStream(null);
+    setFocusedSource(null);
     setAnalysisData(null);
+    onAnalysisUpdate(null); // Clear data in firestore
   }
-
-  // Effect to save analysis data to Firestore every 10 seconds
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (firestore && analysisData && inputSource) {
-        const { peopleCount, densityLevel } = analysisData;
-        
-        let sourceInfo: string;
-        switch(inputSource.type) {
-            case 'file':
-                sourceInfo = (inputSource.content instanceof File) ? inputSource.content.name : 'Local File';
-                break;
-            case 'url':
-                sourceInfo = inputSource.content as string;
-                break;
-            case 'webcam':
-                sourceInfo = 'Webcam Feed';
-                break;
-            case 'screen':
-                sourceInfo = 'Screen Share';
-                break;
-            default:
-                sourceInfo = 'Unknown';
-        }
-
-        addDoc(collection(firestore, 'heatmapRuns'), {
-          eventId: 'active-event-id', // Hardcoded for now
-          timestamp: serverTimestamp(),
-          sourceType: inputSource.type,
-          sourceInfo: sourceInfo || '', // Ensure it's never undefined
-          zoneAnalytics: [ // Simulating for one zone for now
-            {
-              zoneId: 'monitor_zone',
-              crowdCount: peopleCount,
-              densityLevel: densityLevel,
-              alertTriggered: densityLevel === 'high',
-            }
-          ],
-          heatmapSnapshotUrl: '', // Placeholder for snapshot URL
-        });
-      }
-    }, 10000); // 10 seconds
-
-    return () => clearInterval(interval);
-  }, [analysisData, inputSource, firestore]);
+  
+  const onAnalysisUpdate = (data: AnalysisData | null) => {
+    setAnalysisData(data);
+    // Persist data for the main dashboard
+    if (firestore && data) {
+        const liveDataRef = doc(firestore, 'liveCrowd', 'mainFeed');
+        const firestoreData: LiveCrowdData = {
+            total: data.peopleCount,
+            male: data.maleCount,
+            female: data.femaleCount,
+            children: data.childrenCount,
+            version: 'v1',
+            timestamp: serverTimestamp(),
+            sourceName: focusedSource?.name || 'Unknown',
+        };
+        setDoc(liveDataRef, firestoreData, { merge: true });
+    }
+  }
 
   return (
     <div className="flex h-screen flex-row bg-muted/40">
       <AppSidebar />
       <div className="flex flex-1 flex-col">
         <AppHeader />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="lg:col-span-2">
-                <VideoFeed 
-                    source={inputSource} 
-                    stream={stream} 
-                    onStop={handleStop} 
-                    onError={setError}
-                    onAnalysisUpdate={setAnalysisData}
-                />
+        <main className="flex-1 flex flex-col p-4 md:p-6 lg:p-8 gap-6">
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold">Live Monitoring</h1>
+                {viewMode === 'focused' && (
+                    <Button variant="outline" onClick={() => setFocusedSource(null)}>
+                        <Grid className="mr-2 h-4 w-4" />
+                        Back to Grid View
+                    </Button>
+                )}
             </div>
-            <div>
-                 <InputSourceSelector onSourceSelect={handleSourceSelect} disabled={!!inputSource}/>
-                 <AnalysisResults data={analysisData} error={error} />
+            
+            <div className="flex-1 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className={cn("lg:col-span-2 grid gap-4 transition-all duration-300", 
+                    viewMode === 'grid' ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-1'
+                )}>
+                    {viewMode === 'grid' ? (
+                        sources.map(source => (
+                            <div key={source.id} className="relative group/feed aspect-video">
+                                <VideoFeed
+                                    source={source} 
+                                    onAnalysisUpdate={() => {}} // Grid view doesn't need individual analysis updates
+                                    onError={()=>{}}
+                                    isMuted={true}
+                                />
+                                <div 
+                                    onClick={() => handleSourceSelect(source)}
+                                    className="absolute inset-0 bg-black/40 opacity-0 group-hover/feed:opacity-100 flex items-center justify-center cursor-pointer transition-opacity"
+                                >
+                                    <Maximize className="h-10 w-10 text-white" />
+                                </div>
+                                <div className="absolute top-2 left-2 p-1 bg-black/50 rounded-md text-white text-xs font-bold">
+                                    {source.name}
+                                </div>
+                            </div>
+                        ))
+                    ) : (
+                       <VideoFeed 
+                            source={focusedSource} 
+                            onStop={handleStop} 
+                            onError={setError}
+                            onAnalysisUpdate={onAnalysisUpdate}
+                            isMuted={false}
+                            isSelected={true}
+                        />
+                    )}
+                </div>
+                <div className="lg:col-span-1">
+                     <AnalysisResults data={analysisData} error={error} sourceName={focusedSource?.name} />
+                </div>
             </div>
-          </div>
         </main>
       </div>
     </div>
