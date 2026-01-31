@@ -232,7 +232,7 @@ export default function ZonesPage() {
                                             <div key={subzone.id} className="p-3 rounded-md border bg-muted/50">
                                                 <div className='flex justify-between items-center'>
                                                     <p className='font-medium text-sm'>{subzone.name}</p>
-                                                    <Button size="xs" variant="destructive-outline" onClick={() => handleDeleteSubZone(zone.id, subzone.id)}>Delete</Button>
+                                                    <Button size="sm" variant="destructive" onClick={() => handleDeleteSubZone(zone.id, subzone.id)}>Delete</Button>
                                                 </div>
                                                 <div className='mt-2'>
                                                     <Label htmlFor={`vol-${subzone.id}`} className="text-xs">Assign Volunteer</Label>
